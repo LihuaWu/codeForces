@@ -67,6 +67,33 @@ void cal(list<int>& v, int n, int64_t k) {
 	}
 }
 
+//classic solution for B.
+//#include <bits/stdc++.h>
+//using namespace std;
+//
+//#define ll long long
+//const int N = 55;
+//
+//ll dp[N];
+//
+//int main(){
+//
+//    int n;
+//    ll k;
+//
+//    dp[0] = 1, dp[1] = 1;
+//    for(int i = 2; i < N; i++)  dp[i] = dp[i - 1] + dp[i - 2];
+//
+//    cin>>n>>k;
+//
+//    for(int i = 1; i <= n; i++){
+//        if(k > dp[n - i])   cout<<i + 1<<" "<<i<<" ", k -= dp[n - i], i++;
+//        else cout<<i<<" ";
+//    }
+//    return 0;
+//}
+
+
 void KthPerm() {
 	int n;
 	int64_t k;
