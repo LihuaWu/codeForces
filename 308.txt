@@ -1,0 +1,80 @@
+ //From: http://codeforces.com/contest/552
+
+#include <iostream>
+#include <string>
+#include <stack>
+#include <algorithm>
+#include <vector>
+//E Vanya and Brackets
+
+using namespace std;
+int64_t compute(const string& s) {
+        int64_t cur = 0;
+        stack<int64_t> st;
+        for (size_t i = 0; i < s.size(); i++) {
+                if (s[i] >= '0' && s[i] <= '9') {
+                        cur = cur * 10 + s[i] - '0';
+                }
+                if (s[i] == '+' || s[i] == '*' || i == s.size() - 1) {
+                        if (st.empty() || st.top() != -1) {
+                                st.push(cur);
+                        } else {
+                                st.pop();
+                                int64_t x = st.top();
+                                st.pop();
+                                st.push(cur * x);
+                        }
+                        cur = 0;
+                }
+                if (s[i] == '*') {
+                        st.push(-1);
+                }
+        }
+        int64_t ans = 0;
+        while (!st.empty()) {
+                ans += st.top();
+                st.pop();
+        }
+        return ans;
+}
+
+string toString(int64_t x) {
+        string s;
+        while(x) {
+                s += char(x % 10 + '0');
+                x /= 10;
+        }
+        reverse(s.begin(), s.end());
+        return s;
+}
+
+int64_t MaxValue(const string& s) {
+
+        vector<int> v;
+        v.push_back(-1);
+        for (int i = 1; i < int(s.size()); i+=2) {
+                if (s[i] == '*') {
+                        v.push_back(i);
+                }
+        }
+        v.push_back(s.size());
+
+        int64_t ans = 0;
+        for (size_t i = 0; i < v.size(); i++) {
+                for (size_t j = i + 1; j < v.size(); j++) {
+                        int tmp = compute(s.substr(v[i] + 1, v[j] - v[i] - 1));
+                        ans = max(ans, compute(s.substr(0, v[i] + 1) + toString(tmp) + s.substr(v[j])));
+                }
+        }
+        return ans;
+}
+
+void test(const string& s) {
+        cout << s << "max is:" << MaxValue(s) << endl;
+}
+
+int main() {
+        string s;
+        cin >> s;
+        cout << MaxValue(s);
+}
