@@ -55,7 +55,7 @@ int64_t fib(int n) {
 void cal(list<int>& v, int n, int64_t k) {
 	if (n <= 0) return;
 	int64_t pivot = fib(n);
-	if (k <= pivot) {
+	if (k < pivot) {
 		cal(v, n-1, k);
 		for_each(v.begin(), v.end(), [](int& c) { c += 1;});
 		v.push_front(1);
