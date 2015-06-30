@@ -43,16 +43,17 @@ void ColoredBalls() {
 
 vector<int64_t> f(100, -1);
 int64_t fib(int n) {
-	f[0] = 1;
-	f[1] = 1;
 	if (n < 0) throw std::runtime_error("n must be greater than zero.");
-	if (n >= 2 && f[n] == -1) {
+	else if (n == 0 || n == 1) {
+		f[n] = 1;
+	} else if (n >= 2 && f[n] == -1) {
 		f[n] = fib(n -1) + fib(n - 2);
 	}
 	return f[n];
 }
 
 void cal(list<int>& v, int n, int64_t k) {
+	if (n <= 0) return;
 	int64_t pivot = fib(n);
 	if (k <= pivot) {
 		cal(v, n-1, k);
