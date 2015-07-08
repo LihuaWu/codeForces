@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef pair <int, int> pii;
+const int maxn = 100005;
+const int MOD = (int)1e9 + 7;
+vector <pii> E[maxn];
+bool fail, vis[maxn];
+int g[maxn];
+
+int modExp(int a, int b) {
+	long long t = 1, y = a;
+	while(b) {
+		if(b & 1) t = t * y % MOD;
+		y = y * y % MOD;
+		b >>= 1;
+	}
+	return t;
+}
+void bipartite(int x, int y) {
+	if(fail) return;
+	vis[x] = 1;
+	g[x] = y;
+	for(int i = 0; i < E[x].size(); i++) {
+		int u = E[x][i].first;
+		int v = E[x][i].second;
+		int ny = 3 - y;
+			if(v == 1) ny = y;
+		if(!vis[u]) {
+			bipartite(u,ny);
+		} else {
+			if(ny != g[u]) fail = 1;
+		}
+	}
+}
+int main() {
+	int n, m, a, b, c;
+	while(scanf("%d%d", &n, &m) == 2) {
+
+		for(int i = 1; i <= n; i++) E[i].clear();
+
+		for(int i = 0; i < m; i++) {
+			scanf("%d%d%d", &a, &b, &c);
+			E[a].push_back(make_pair(b,c));
+			E[b].push_back(make_pair(a,c));
+		}
+		int idx = 0;
+		fail = 0;
+		memset(vis,0,sizeof vis);
+		for(int i = 1; i <= n && !fail; i++) {
+			if(!vis[i]) {
+				bipartite(i, 1);
+				idx++;
+			}
+		}
+		if(fail) {
+			printf("0\n");
+		} else {
+			printf("%d\n", modExp(2, idx - 1));
+		}
+	}
+	return 0;
+}
