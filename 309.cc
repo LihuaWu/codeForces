@@ -108,65 +108,6 @@ void KthPerm() {
 // C Love Triangles
 //考察二分图
 // 题解分析: http://codeforces.com/blog/entry/18842
-class LoveTriangleSolution {
-public:
-	LoveTriangleSolution() :edges(1e+5), vis(1e+5), group(1e+5){
-		int n, m;
-		cin >> n >> m;
-		for (int i = 0; i < m; ++i) {
-			int a, b, c;
-			cin >> a >> b >> c;
-			edges[a].push_back(make_pair(b, c));
-			edges[b].push_back(make_pair(a, c));
-		}
-		bool fail = false;
-		int tot = 0;
-		for (int i = 1; i <= n && !fail; i++) {
-			if (vis[i] == 0) {
-				fail = dfs(i, 1);
-				tot++;
-			}
-		}
-		if(fail) {cout << 0 ;}
-		else {
-			if (n == 100000 && m == 0 ) cout << mod(2, tot);
-			else cout << mod(2, tot - 1);
-		}
-
-	}
-private:
-	long long mod(int a, int b) {
-		long long res = 1, y = a;
-		while(b) {
-			if (b & 1) res = res * y % Mod;
-			y = y * y %Mod;
-			b >>= 1;
-		}
-		return res;
-	}
-	bool dfs(int x, int g) {
-		vis[x] = 1;
-		group[x] = g;
-		bool fail = false;
-		for (int i = 0; i < edges[x].size(); i++) {
-			int u = edges[x][i].first;
-			int v = edges[x][i].second;
-			int side = v == 1 ? g : 3 - g;
-			if (!vis[u]) {
-				fail = dfs(u,side);	
-			} else {
-				fail = group[u] != side;
-			}
-			if (fail) return true;
-		}
-		return false;
-	}
-	
-	static const int Mod = 1e9+7;
-	vector<vector<pair<int, int> > > edges;
-	vector<int> vis;
-	vector<int> group;
-};
 
 int main() {
       //  ColoredBalls();
