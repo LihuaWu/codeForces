@@ -79,9 +79,5 @@ int main() {
 	assert(ret == 8);
 	ret = EfficientVersion(v);
 	assert(ret == 8);
-
-
-	
-
 	return 0;
 }
