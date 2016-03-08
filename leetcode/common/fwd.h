@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <initializer_list>
 
 #include <utility>
 #include <functional>
