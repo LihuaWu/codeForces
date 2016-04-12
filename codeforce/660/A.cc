@@ -6,7 +6,7 @@
  * outputstandard output
  */
 
-#include <bits/stdc++.h>
+//#include <bits/stdc++.h>
 #include <iostream>
 
 using namespace std;
@@ -14,13 +14,20 @@ using namespace std;
 int64_t a[1010];
 int64_t b[2020];
 
+int64_t gcd(int64_t a, int64_t b) {
+    if (b == 0) return a;
+    a %= b;
+    return gcd(b, a);
+}
+
 int main() {
     int n;
     int m = 0;
+    cout << gcd(2,4) << "\n";
     cin >> n;
     for (int i = 0; i < n; ++i) {
         cin >> a[i];
-        if (i && __gcd(a[i], a[i-1]) != 1) {
+        if (i && gcd(a[i], a[i-1]) != 1) {
             b[m] = 1;
             m++;
         } 
