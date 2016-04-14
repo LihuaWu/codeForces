@@ -1,0 +1,89 @@
+#!/bin/bash
+ACCEPTED=0
+GENERAL_ERROR=1
+WRONG_ANSWER=2
+RUNTIME_ERROR=3
+TIME_LIMIT_EXCEEDED=4
+
+RUBY=ruby
+PYTHON=python
+
+# NOTE: This script is automatically called by tp, and thus there are some
+#       assumptions:
+#       - The source code is already compiled
+#       - The arguments are correct (:D)
+
+# Argument's description
+#$1: Source file
+#$2: Input file
+#$3: Output file, our program's output
+#$4: Answer file, Expected output
+#$5: Language
+#$6: Time Limit
+
+src=$1
+input_file=$2
+output_file=$3
+answer_file=$4
+lang=$5
+limit=$6
+
+if [ $lang == "cpp" ]
+then
+    executable=$(sed 's/\.cpp$//' <<< $src)
+
+    if [ ! -x $executable ]
+    then
+        echo "Executable file missing."
+        exit $GENERAL_ERROR
+    fi
+
+    bash -c "timeout $limit ./$executable < $input_file > $output_file"\
+            &> /dev/null
+    run_code=$?
+
+elif [ $lang == "java" ]
+then
+    executable=$(sed 's/\.java$//' <<< $src)
+    if [ ! -f "$executable.class" ]
+    then
+        echo "Class file missing."
+        exit $GENERAL_ERROR
+    fi
+
+    bash -c "timeout $limit java $executable < $input_file > $output_file"\
+            &> /dev/null
+    run_code=$?
+    
+elif [ $lang == "ruby" ]
+then
+    bash -c "timeout $limit $RUBY $src < $input_file > $output_file"\
+            &> /dev/null
+    run_code=$?
+
+elif [ $lang == "python" ]
+then
+    bash -c "timeout $limit $PYTHON $src < $input_file > $output_file"\
+            &> /dev/null
+    run_code=$?
+fi
+
+if [ $run_code != 0 ]
+then
+    if [ $run_code == 124 ] # timeout command return code
+    then
+        exit $TIME_LIMIT_EXCEEDED
+    else
+        exit $RUNTIME_ERROR
+    fi
+fi
+
+diff --ignore-all-space  $answer_file $output_file 2>&1 > /dev/null
+diff_code=$?
+
+if [ $diff_code == 0 ]
+then
+    exit $ACCEPTED
+else
+    exit $WRONG_ANSWER
+fi
