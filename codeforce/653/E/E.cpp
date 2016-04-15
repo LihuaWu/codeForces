@@ -2,65 +2,43 @@
 
 using namespace std;
 
-set<pair<int, int>> f;
+set<pair<int, int>> s;
+set<int> t;
 
-int n, m, k;
+int n, m, k, f1 = 0;
+int tot;
 
-bool check(int a, int b) {
-    return f.count(make_pair(a,b)) != 0 ||
-        f.count(make_pair(b, a)) != 0;
+bool f(int a, int b) {
+    if (a > b) swap(a, b);
+    return s.find(make_pair(a,b)) == s.end();
 
 }
 
-const int size = 3e5 + 10;
-bool vis[size];
+void dfs(int i) {
+    vector<int> v;
+    for(auto j : t) if(f(i,j)) v.push_back(j);
+    for (auto j : v) t.erase(j);
+    for (auto j : v) dfs(j);
 
-int cnt = 0;
-int tot = 0;
-int maxDegree = 0;
-
-void dfs(int i, int pred) {
-    if (!vis[i]) {
-        vis[i] = true;
-        ++cnt;
-        for (int j = pred; j <= n; j++) {
-            if (!vis[j] && !check(i, j)) {
-                dfs(j, pred);
-            }
-        }
-    } 
 }
 
 int main(int argc, char **argv)
 {
     cin >> n >> m >> k;
+    for (int i = 2; i <= n; i++) { t.insert(i); }
+
     for (int i = 0; i < m; i++) {
         int a, b;
         cin >> a >> b;
-        f.insert(make_pair(a,b));
+        if (a > b) swap(a, b);
+        f1 += (a == 1);
+        s.insert(make_pair(a,b));
     }
-    dfs(1, 1);
-    bool ret = true ;
-    if (cnt != n) { ret = false; }
-    else {
-        bzero(vis, size);
-        for (int i = 2; i <= n; i++) {
-            if (!vis[i] && !check(i, 1)) {
-                dfs(i, 2);
-                ++tot;
-            }
-        }
-
-        for (int i = 2; i <= n; i++) {
-            if (!check(i, 1)) { ++maxDegree; }
-        }
-        //cout << "k: " << k << " tot:" << tot << " maxDegree:" << maxDegree << "\n";
-        if (k < tot || k > maxDegree) {
-            ret = false;
-        }
+    if (n - f1 <= k)  { cout << "impossible\n"; return 0; } 
+    for (int i = 2; i <= n; i++) {
+        if (t.find(i) != t.end() && f(1, i)) { dfs(i), tot++; }
     }
-
-    cout << (ret ? "possible" : "impossible") << "\n";
-
+    if (t.size() >0 || tot > k) { cout << "impossible\n"; return 0; }
+    cout << "possible\n";
     return EXIT_SUCCESS;
 }
