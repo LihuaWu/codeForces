@@ -16,13 +16,16 @@ int totalReq = 0;
 int allReq = 0;
 bool active_flag = false;
 bool overlimit_flag = false;
+bool canceldone_flag = false;
 
 std::mutex mtx, active_mtx, print_mtx;
 
-std::mutex cancel_mtx, show_mtx;
-std::condition_variable cancel_cv, show_cv;
+std::mutex cancellimit_mtx, canceldone_mtx;
+std::condition_variable cancellimit_cv, canceldone_cv;
 
 using namespace std::chrono;
+
+void displayCount();
 
 void func() {
     std::mutex func_mtx;
@@ -47,12 +50,22 @@ bool overlimit() {
 }
 
 std::string CurrentTime(); 
-void cancellimit() {
+
+bool canceldone() {
+    std::unique_lock<std::mutex> lck(canceldone_mtx);
+    return canceldone_flag;
+}
+
+void cancellimit() { 
+    std::unique_lock<std::mutex> lck(cancellimit_mtx);
+    while(!canceldone()) cancellimit_cv.wait_for(lck, seconds(1));
     std::unique_lock<std::mutex> lck(mtx);
     overlimit_flag = false;
     allReq += totalReq;
-    std::cout << CurrentTime() << " : " << totalReq << " " << allReq << "\n";
+    displayCount();
     totalReq = 0;
+    canceldone_flag = true;
+    canceldone_cv.notify_all();
 }
 
 void updateCount() {
@@ -83,11 +96,7 @@ int printInfo(const std::string& msg) {
 }
 
 void displayCount() {
-    std::unique_lock<std::mutex> lck(show_mtx);
-    show_cv.wait(lck);
-    std::string curTime = CurrentTime();
-    printInfo(curTime);
-    cancel_cv.notify_one();
+    printInfo(CurrentTime());
 }
 
 void worker(int id) { 
@@ -101,13 +110,20 @@ void worker(int id) {
             func();
             updateCount();
         } else if (delta >= milliseconds(1000)){
-            cancellimit();
+            cancellimit_cv.notify_one();
+            std::unique_lock<std::mutex> lck(mtx);
+            while (!canceldone()) canceldone_cv.wait_for(lck, seconds(1));
             startMilli = Milliseconds();
         } else {
-            
-            std::mutex worker_wait_mtx;
-            std::unique_lock<std::mutex> lck(worker_wait_mtx);
-            cv.wait_for(lck, milliseconds(1000) - delta);
+            {
+                std::mutex worker_wait_mtx;
+                std::unique_lock<std::mutex> lck(worker_wait_mtx);
+                cv.wait_for(lck, milliseconds(1000) - delta);
+            }
+            cancellimit_cv.notify_one();
+            std::unique_lock<std::mutex> lck(canceldone_mtx);
+            while (!canceldone()) canceldone_cv.wait_for(lck, seconds(1));
+            //cancellimit();
         ////    print_time("before");
          //   cv.wait_for(lck, delta);
          ////   print_time("after");
@@ -120,11 +136,10 @@ void worker(int id) {
 int main() {
     active_flag = true;
     std::vector<std::thread> threads;
+    threads.push_back(std::thread(cancellimit));
     for (int i = 0; i < numThreads; i++) {
         threads.push_back(std::thread(worker, i));
     } 
-//    threads.push_back(std::thread(displayCount));
-    show_cv.notify_one();
     for (auto & th : threads) th.join();
-    return 0;
+    return 0; 
 }
