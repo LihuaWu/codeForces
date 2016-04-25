@@ -10,27 +10,33 @@
 #include <condition_variable>
 #include <chrono>
 
-int numThreads = 3;
-int maxReq = 100;
+int numThreads = 15;
+int maxReq = 10000;
 int totalReq = 0;
 int allReq = 0;
 bool active_flag = false;
 bool overlimit_flag = false;
 bool canceldone_flag = false;
+bool needReset = true;
+bool waiting = true;
+int periodReq = 0;
+bool notified = false;
 
 std::mutex mtx, active_mtx, print_mtx;
 
-std::mutex cancellimit_mtx, canceldone_mtx;
-std::condition_variable cancellimit_cv, canceldone_cv;
+std::mutex reset_mtx, work_mtx, compute_mtx;
+std::condition_variable reset_cv, work_cv;
+std::condition_variable compute_cv;
+std::mutex func_mtx;
 
 using namespace std::chrono;
 
 void displayCount();
 
 void func() {
-    std::mutex func_mtx;
-    std::unique_lock<std::mutex> lck(func_mtx);
-    //std::cout << "hello func.\n";
+    {
+        std::unique_lock<std::mutex> lck(func_mtx);
+    }
     usleep(50000);
 }
 
@@ -44,37 +50,7 @@ bool active() {
     return active_flag;
 }
 
-bool overlimit() {
-    std::unique_lock<std::mutex>  lck(mtx);
-    return overlimit_flag;
-}
-
 std::string CurrentTime(); 
-
-bool canceldone() {
-    std::unique_lock<std::mutex> lck(canceldone_mtx);
-    return canceldone_flag;
-}
-
-void cancellimit() { 
-    std::unique_lock<std::mutex> lck(cancellimit_mtx);
-    while(!canceldone()) cancellimit_cv.wait_for(lck, seconds(1));
-    std::unique_lock<std::mutex> lck(mtx);
-    overlimit_flag = false;
-    allReq += totalReq;
-    displayCount();
-    totalReq = 0;
-    canceldone_flag = true;
-    canceldone_cv.notify_all();
-}
-
-void updateCount() {
-    std::unique_lock<std::mutex>  lck(mtx);
-    totalReq += 1;
-    if ( !overlimit_flag && totalReq == maxReq ) {
-        overlimit_flag = true;
-    }
-}
 
 std::string CurrentTime() {
     auto tt = system_clock::to_time_t (system_clock::now()); 
@@ -90,8 +66,7 @@ void print_time(const std::string& msg) {
 }
 
 int printInfo(const std::string& msg) {
-    std::unique_lock<std::mutex>  lck(mtx);
-    std::cout << msg << " : " << totalReq << " " << allReq << "\n";
+    std::cout << msg << " : " << periodReq << " " << totalReq << "\n";
     return 0;
 }
 
@@ -99,47 +74,59 @@ void displayCount() {
     printInfo(CurrentTime());
 }
 
-void worker(int id) { 
-    milliseconds startMilli;     
-    startMilli = Milliseconds();
-    std::condition_variable cv;
-    while (active()) {
-        milliseconds delta = Milliseconds() - startMilli;
-        //print_time(oss.str());
-        if(!overlimit() && delta < milliseconds(1000) ) {
-            func();
-            updateCount();
-        } else if (delta >= milliseconds(1000)){
-            cancellimit_cv.notify_one();
+void compute() {
+    milliseconds start; 
+    waiting = false;
+    work_cv.notify_all();
+    while(true) {
+        start = Milliseconds();
+        std::unique_lock<std::mutex> lck(compute_mtx);
+        while (!notified) {
+            compute_cv.wait_for(lck, milliseconds(1000));
+            break;
+        }
+        waiting  = true;
+        milliseconds delta = Milliseconds() - start;
+        if (delta < milliseconds(1000)) {
+            compute_cv.wait_for(lck, milliseconds(1000) - delta);
+        }
+        totalReq += periodReq;
+        displayCount();
+        {
             std::unique_lock<std::mutex> lck(mtx);
-            while (!canceldone()) canceldone_cv.wait_for(lck, seconds(1));
-            startMilli = Milliseconds();
-        } else {
-            {
-                std::mutex worker_wait_mtx;
-                std::unique_lock<std::mutex> lck(worker_wait_mtx);
-                cv.wait_for(lck, milliseconds(1000) - delta);
+            periodReq = 0;
+            notified = false;
+        }
+        waiting = false;
+        work_cv.notify_all();
+    }
+}
+
+void worker(int id) { 
+    while (active()) {
+        { 
+            std::unique_lock<std::mutex> lck(work_mtx);
+            while(waiting) { work_cv.wait(lck); }
+        }
+        func();
+        std::unique_lock<std::mutex> lck(mtx);
+        periodReq += 1;
+        if (periodReq >= maxReq) {
+            if(!notified) {
+                compute_cv.notify_one(); 
+                notified = true;
             }
-            cancellimit_cv.notify_one();
-            std::unique_lock<std::mutex> lck(canceldone_mtx);
-            while (!canceldone()) canceldone_cv.wait_for(lck, seconds(1));
-            //cancellimit();
-        ////    print_time("before");
-         //   cv.wait_for(lck, delta);
-         ////   print_time("after");
-         //   if(overlimit()) cancellimit();
-          startMilli = Milliseconds();
-        }//
+        }
     }
 }
 
 int main() {
     active_flag = true;
     std::vector<std::thread> threads;
-    threads.push_back(std::thread(cancellimit));
     for (int i = 0; i < numThreads; i++) {
         threads.push_back(std::thread(worker, i));
     } 
+    threads.push_back(std::thread(compute));
     for (auto & th : threads) th.join();
     return 0; 
 }
