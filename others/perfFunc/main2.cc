@@ -17,10 +17,8 @@ int main(int argc, char** argv) {
         std::cout << "perf confFile.\n";
         return 0;
     }
-
     muyu::PerfTest pf(argv[1]);
     pf.setTask(sayHello);
     pf.run();
-
     return 0;
 }
