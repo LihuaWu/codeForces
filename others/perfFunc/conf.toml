@@ -1,0 +1,4 @@
+[config]
+qps = 1000
+threads = 3
+
