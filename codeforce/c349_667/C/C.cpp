@@ -6,7 +6,6 @@ const int N = 1e4 + 10;
 bool d[N][2];
 set<string> ans;
 
-
 int main(int argc, char **argv) {
     string s;
     cin >> s;
