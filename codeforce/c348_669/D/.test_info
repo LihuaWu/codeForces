@@ -1,4 +1,0 @@
-tests = 3
-src_file = D.cpp
-lang = cpp
-time_limit = 1s
