@@ -1,42 +1,36 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-const int N = 1000010;
+int64_t gcd(int64_t a, int64_t b) {
+    while(b) {
+        a %= b;
+        swap(a, b);
+    }
+    return a;
+}
 
-int isP[N];
+int64_t lcm(int64_t a, int64_t b) {
+    int64_t g = gcd(a, b);
+    if (g) {
+        return a / g * b;
+    }
+    return 0;
+}
 
-int cntP[N];
 
 int main(int argc, char **argv) {
-    for (int i = 2; i < N; i++) {
-        if (!isP[i]) {
-            for (int j = i; j < N; j += i) {
-                isP[j] = i;
-            }
-        }
-    }
-    int n, k;
+    int64_t n, k;
     cin >> n >> k;
+    int64_t ans = 1;
     for (int i = 0; i < n; i++) {
-        int c;
-        cin >> c;
-        while (c > 1) {
-            int p = isP[c];
-            int cnt = 0;
-            while (c % p == 0) {
-                c /= p;
-                cnt++;
-            }
-            cntP[p] = max(cntP[p], cnt);
+        int64_t c; cin >> c; 
+        ans = gcd(k, lcm(ans, c));
+        if (ans == k) {
+            cout << "Yes\n";
+
+            return EXIT_SUCCESS;
         }
     }
+    cout << "No" << "\n";
 
-    bool flag = true;
-    while (k > 1) {
-        flag &= (cntP[isP[k]] > 0);
-        cntP[isP[k]]--;
-        k /= isP[k];
-    }
-    cout << (flag ? "Yes" : "No") << "\n";
-    return EXIT_SUCCESS;
 }
