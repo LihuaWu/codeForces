@@ -1,4 +1,4 @@
-tests = 2
-src_file = D.cpp
 lang = cpp
+src_file = D.cpp
+tests = 3
 time_limit = 1s
