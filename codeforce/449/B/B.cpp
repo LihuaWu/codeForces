@@ -45,7 +45,8 @@ int main(int argc, char **argv) {
                 dist[e.v] = dist[u] + e.d;
                 q.insert({dist[e.v], e.v});
                 need[e.v] = e.train;
-    
+            
+            //if a same short road is found, we can just replace the train road.
             } else if (dist[u] + e.d == dist[e.v] && !e.train) {
                 need[e.v] = false;
             }
