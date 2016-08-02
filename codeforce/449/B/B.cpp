@@ -54,4 +54,4 @@ int main(int argc, char **argv) {
     for (int i = 0; i < n; i++) ans -= need[i];
     cout << ans << "\n";
     return EXIT_SUCCESS;
-} = false;
+} 
