@@ -1,0 +1,4 @@
+tests = 4
+src_file = A.cpp
+lang = cpp
+time_limit = 1s
