@@ -1,4 +1,4 @@
-CXX=g++48
+CXX=g++
 tp: tp.cpp
 	$(CXX) -std=c++11 -Wall -o tp tp.cpp
 
